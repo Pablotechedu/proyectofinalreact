@@ -38,14 +38,21 @@ const Products = () => {
     fetchProducts();
   }, []);
 
-  const handleAddToCart = (product, quantity) => {
+  const handleAddToCart = async (product, quantity) => {
     if (!user) {
       alert("Debes iniciar sesión para agregar productos al carrito");
       return;
     }
 
-    addToCart(product, quantity);
-    alert(`${product.nombre} agregado al carrito`);
+    const result = await addToCart(product, quantity);
+
+    if (result.success) {
+      alert(`${product.nombre} agregado al carrito`);
+      // Recargar productos para mostrar stock actualizado
+      window.location.reload();
+    } else {
+      alert(`Error: ${result.error}`);
+    }
   };
 
   if (loading) {
@@ -88,7 +95,7 @@ const Products = () => {
   );
 };
 
-// Componente ProductCard integrado
+// Componente ProductCard mejorado con manejo de stock
 const ProductCard = ({ product, onAddToCart }) => {
   const [quantity, setQuantity] = useState(1);
 
@@ -99,8 +106,11 @@ const ProductCard = ({ product, onAddToCart }) => {
     }
   };
 
+  const isOutOfStock = product.stock === 0;
+  const isLowStock = product.stock <= 5 && product.stock > 0;
+
   return (
-    <div className="product-card">
+    <div className={`product-card ${isOutOfStock ? "out-of-stock" : ""}`}>
       <div className="product-image">
         <img
           src={product.imagen}
@@ -110,35 +120,54 @@ const ProductCard = ({ product, onAddToCart }) => {
               "https://via.placeholder.com/300x200?text=Imagen+No+Disponible";
           }}
         />
+        {isOutOfStock && (
+          <div className="stock-overlay">
+            <span>SIN STOCK</span>
+          </div>
+        )}
       </div>
 
       <div className="product-info">
         <h3 className="product-name">{product.nombre}</h3>
         <p className="product-description">{product.descripcion}</p>
         <p className="product-price">${product.precio}</p>
-        <p className="product-stock">Stock: {product.stock} unidades</p>
 
-        <div className="product-actions">
-          <div className="quantity-selector">
-            <label htmlFor={`quantity-${product.id}`}>Cantidad:</label>
-            <input
-              type="number"
-              id={`quantity-${product.id}`}
-              min="1"
-              max={product.stock}
-              value={quantity}
-              onChange={handleQuantityChange}
-            />
-          </div>
-
-          <button
-            className="add-to-cart-btn"
-            onClick={() => onAddToCart(product, quantity)}
-            disabled={product.stock === 0}
-          >
-            {product.stock === 0 ? "Sin Stock" : "Agregar al Carrito"}
-          </button>
+        <div className="stock-info">
+          {isOutOfStock ? (
+            <p className="stock-status out-of-stock">Sin stock</p>
+          ) : isLowStock ? (
+            <p className="stock-status low-stock">
+              ¡Últimas {product.stock} unidades!
+            </p>
+          ) : (
+            <p className="stock-status in-stock">
+              Stock: {product.stock} unidades
+            </p>
+          )}
         </div>
+
+        {!isOutOfStock && (
+          <div className="product-actions">
+            <div className="quantity-selector">
+              <label htmlFor={`quantity-${product.id}`}>Cantidad:</label>
+              <input
+                type="number"
+                id={`quantity-${product.id}`}
+                min="1"
+                max={product.stock}
+                value={quantity}
+                onChange={handleQuantityChange}
+              />
+            </div>
+
+            <button
+              className="add-to-cart-btn"
+              onClick={() => onAddToCart(product, quantity)}
+            >
+              Agregar al Carrito
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

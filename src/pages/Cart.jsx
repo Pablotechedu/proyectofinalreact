@@ -17,11 +17,13 @@ const Cart = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleQuantityChange = (productId, newQuantity) => {
-    if (newQuantity <= 0) {
-      removeFromCart(productId);
-    } else {
-      updateQuantity(productId, newQuantity);
+  const handleQuantityChange = async (productId, newQuantity) => {
+    const result = await updateQuantity(productId, newQuantity);
+
+    if (!result.success) {
+      alert(`Error: ${result.error}`);
+      // Recargar la página para mostrar el stock actual
+      window.location.reload();
     }
   };
 
