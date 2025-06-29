@@ -70,7 +70,7 @@ export const CartProvider = ({ children }) => {
 
     try {
       const orderData = {
-        userId: user.id,
+        usuarioID: user.id, // Cambiar de userId a usuarioID
         productos: JSON.stringify(cartItems),
         total: getCartTotal(),
         fecha: new Date(),
